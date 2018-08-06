@@ -1,32 +1,41 @@
-# Tutorial for gRPC with python
+# TensorFlow Serving
 
 ## Setup
 
 ```bash
 virtualenv env
 source env/bin/activate
-pip install protobuf
+pip install tensorflow-serving-api
 ```
 
-## Compile protocol buffers
-
+## Export model
+To export, run
 ```bash
-protoc [-I=.] --python_out=. ./addressbook.proto
+python twice_plus_three.py `version`
 ```
-This will generates `addressbook_pb2.py`.
 
-## Write and read address book
-
-To write,
+To check SavedModel, run
 ```bash
-python write_message.py `addressbook`
+saved_model_cli show --dir ./saved_model_twice_plus_three/`version` --all
 ```
 
-To read,
+## Run TensorFlow Serving API
 ```bash
-python read_message.py `addressbook`
+docker run --rm --name tsf -p 8500:8500 -p 8501:8501 -v ./saved_model_twice_plus_three:/models/twice_plus_three -e MODEL_NAME=twice_plus_three -t tensorflow/serving
 ```
 
+## Call predict API
+To call RESTful API from command line, run
+```bash
+curl -d '{"instances": [1.0, 2.0, 5.0]}' -X POST http://localhost:8501/v1/models/twice_plus_three:predict
+```
 
-## Reference
-* https://grpc.io/docs/tutorials/basic/python.html
+To call gRPC API, run
+```bash
+python twice_plus_three_client.py
+```
+
+## References
+* https://www.tensorflow.org/serving/docker
+* https://grpc.io/docs/quickstart/python.html
+* http://nlp-tech-blog.hatenablog.com/entry/2018/02/19/172104
